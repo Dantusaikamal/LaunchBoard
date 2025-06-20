@@ -1,149 +1,211 @@
 
-import { Link, useLocation } from "react-router-dom"
 import { cn } from "@/lib/utils"
-import { 
-  Home, 
-  FolderOpen, 
-  Code, 
-  Megaphone, 
-  Rocket,
+import { Button } from "@/components/ui/button"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
+import {
+  Home,
+  FolderOpen,
+  Lightbulb,
+  Code,
+  Megaphone,
   DollarSign,
   BarChart3,
-  Lightbulb,
+  Brain,
   Settings,
-  X,
-  Menu,
-  Zap
+  Rocket,
+  X
 } from "lucide-react"
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
+import { Link, useLocation } from "react-router-dom"
+import { useApps } from "@/hooks/useApps"
+import { useIdeas } from "@/hooks/useIdeas"
+
+interface SidebarNavProps {
+  className?: string
+  onClose?: () => void
+}
 
 const navigation = [
   {
-    name: "Dashboard",
-    href: "/",
-    icon: Home
+    title: "Overview",
+    items: [
+      {
+        title: "Dashboard",
+        href: "/",
+        icon: Home,
+        description: "Your project overview"
+      },
+      {
+        title: "My Apps",
+        href: "/apps",
+        icon: FolderOpen,
+        description: "Manage your applications"
+      }
+    ]
   },
   {
-    name: "Apps",
-    href: "/apps",
-    icon: FolderOpen
+    title: "Development",
+    items: [
+      {
+        title: "Idea Vault",
+        href: "/ideas",
+        icon: Lightbulb,
+        description: "Store and organize ideas"
+      },
+      {
+        title: "Development",
+        href: "/development",
+        icon: Code,
+        description: "Code and build"
+      }
+    ]
   },
   {
-    name: "Idea Vault",
-    href: "/ideas",
-    icon: Zap
+    title: "Growth",
+    items: [
+      {
+        title: "Marketing",
+        href: "/marketing",
+        icon: Megaphone,
+        description: "Promote your apps"
+      },
+      {
+        title: "Revenue",
+        href: "/revenue",
+        icon: DollarSign,
+        description: "Track earnings"
+      },
+      {
+        title: "Analytics",
+        href: "/analytics",
+        icon: BarChart3,
+        description: "Usage insights"
+      }
+    ]
   },
   {
-    name: "Development",
-    href: "/development",
-    icon: Code
-  },
-  {
-    name: "Marketing",
-    href: "/marketing",
-    icon: Megaphone
-  },
-  {
-    name: "Deployment",
-    href: "/deployment",
-    icon: Rocket
-  },
-  {
-    name: "Revenue",
-    href: "/revenue",
-    icon: DollarSign
-  },
-  {
-    name: "Analytics",
-    href: "/analytics",
-    icon: BarChart3
-  },
-  {
-    name: "Insights",
-    href: "/insights",
-    icon: Lightbulb
-  },
-  {
-    name: "Settings",
-    href: "/settings",
-    icon: Settings
+    title: "Intelligence",
+    items: [
+      {
+        title: "Insights",
+        href: "/insights",
+        icon: Brain,
+        description: "AI-powered insights"
+      }
+    ]
   }
 ]
 
-export function SidebarNav() {
+export function SidebarNav({ className, onClose }: SidebarNavProps) {
   const location = useLocation()
-  const [isMobileOpen, setIsMobileOpen] = useState(false)
+  const { apps } = useApps()
+  const { ideas } = useIdeas()
+
+  const getBadgeCount = (href: string) => {
+    switch (href) {
+      case "/apps":
+        return apps.length
+      case "/ideas":
+        return ideas.length
+      default:
+        return null
+    }
+  }
+
+  const getBadgeVariant = (href: string) => {
+    switch (href) {
+      case "/apps":
+        return apps.filter(app => app.status === 'live').length > 0 ? 'default' : 'secondary'
+      case "/ideas":
+        return ideas.filter(idea => idea.status === 'brainstorm').length > 0 ? 'default' : 'secondary'
+      default:
+        return 'secondary'
+    }
+  }
 
   return (
-    <>
-      {/* Mobile overlay */}
-      {isMobileOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-          onClick={() => setIsMobileOpen(false)}
-        />
-      )}
-
-      {/* Mobile toggle button */}
-      <Button
-        variant="ghost"
-        size="sm"
-        className="fixed top-4 left-4 z-50 lg:hidden"
-        onClick={() => setIsMobileOpen(!isMobileOpen)}
-      >
-        {isMobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-      </Button>
-
-      {/* Sidebar */}
-      <div className={cn(
-        "fixed inset-y-0 left-0 z-30 w-64 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0",
-        isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-      )}>
-        <div className="flex flex-col h-full bg-background border-r border-border">
-          {/* Logo Section */}
-          <div className="flex items-center gap-2 p-6 border-b border-border">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-600 to-cyan-600 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">L</span>
-            </div>
-            <span className="font-bold text-xl">LaunchBoard</span>
+    <div className={cn("flex h-full w-64 flex-col bg-background", className)}>
+      {/* Header */}
+      <div className="flex h-14 sm:h-16 items-center justify-between px-4 border-b">
+        <div className="flex items-center gap-2">
+          <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
+            <Rocket className="h-4 w-4 text-white" />
           </div>
-
-          <div className="flex flex-col flex-grow px-3 py-4">
-            <nav className="flex-1 space-y-1">
-              {navigation.map((item) => {
-                const isActive = location.pathname === item.href
-                return (
-                  <Link
-                    key={item.name}
-                    to={item.href}
-                    onClick={() => setIsMobileOpen(false)}
-                    className={cn(
-                      "group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 hover:scale-[1.02]",
-                      isActive
-                        ? "bg-blue-100 text-blue-900 dark:bg-blue-900 dark:text-blue-100 shadow-sm"
-                        : "text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
-                    )}
-                  >
-                    <item.icon
-                      className={cn(
-                        "mr-3 h-5 w-5 flex-shrink-0 transition-colors",
-                        isActive 
-                          ? "text-blue-600 dark:text-blue-400" 
-                          : "text-gray-400 group-hover:text-gray-500 dark:group-hover:text-gray-300"
-                      )}
-                    />
-                    {item.name}
-                    {isActive && (
-                      <div className="ml-auto w-2 h-2 bg-blue-600 rounded-full animate-pulse"></div>
-                    )}
-                  </Link>
-                )
-              })}
-            </nav>
-          </div>
+          <span className="font-bold text-lg">LaunchBoard</span>
         </div>
+        {onClose && (
+          <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0 lg:hidden">
+            <X className="h-4 w-4" />
+          </Button>
+        )}
       </div>
-    </>
+
+      {/* Navigation */}
+      <ScrollArea className="flex-1 px-3 py-4">
+        <div className="space-y-6">
+          {navigation.map((section) => (
+            <div key={section.title}>
+              <h3 className="mb-2 px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                {section.title}
+              </h3>
+              <div className="space-y-1">
+                {section.items.map((item) => {
+                  const isActive = location.pathname === item.href
+                  const badgeCount = getBadgeCount(item.href)
+                  const badgeVariant = getBadgeVariant(item.href)
+                  
+                  return (
+                    <Link
+                      key={item.href}
+                      to={item.href}
+                      onClick={onClose}
+                      className="block"
+                    >
+                      <Button
+                        variant={isActive ? "secondary" : "ghost"}
+                        className={cn(
+                          "w-full justify-start h-auto p-3 font-normal",
+                          isActive && "bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-200"
+                        )}
+                      >
+                        <item.icon className="mr-3 h-4 w-4 flex-shrink-0" />
+                        <div className="flex-1 text-left">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium">{item.title}</span>
+                            {badgeCount !== null && badgeCount > 0 && (
+                              <Badge variant={badgeVariant} className="ml-2 h-5 text-xs">
+                                {badgeCount}
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {item.description}
+                          </p>
+                        </div>
+                      </Button>
+                    </Link>
+                  )
+                })}
+              </div>
+              {section.title !== "Intelligence" && <Separator className="mt-4" />}
+            </div>
+          ))}
+        </div>
+      </ScrollArea>
+
+      {/* Footer */}
+      <div className="mt-auto p-4 border-t">
+        <Link to="/settings" onClick={onClose}>
+          <Button
+            variant={location.pathname === "/settings" ? "secondary" : "ghost"}
+            className="w-full justify-start"
+          >
+            <Settings className="mr-3 h-4 w-4" />
+            Settings
+          </Button>
+        </Link>
+      </div>
+    </div>
   )
 }

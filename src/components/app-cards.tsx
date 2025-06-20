@@ -13,7 +13,8 @@ import {
   Calendar,
   DollarSign,
   Code,
-  Globe
+  Globe,
+  Image as ImageIcon
 } from "lucide-react"
 
 interface AppCardsProps {
@@ -29,6 +30,14 @@ const statusColors = {
   deployed: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
   live: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
   retired: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+}
+
+const statusEmojis = {
+  idea: '💡',
+  building: '🔨',
+  deployed: '🚀',
+  live: '✅',
+  retired: '📦'
 }
 
 export function AppCards({ onNewApp, onEditApp, apps: propApps, loading: propLoading }: AppCardsProps) {
@@ -49,6 +58,7 @@ export function AppCards({ onNewApp, onEditApp, apps: propApps, loading: propLoa
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 6 }).map((_, i) => (
           <div key={i} className="animate-pulse bg-card rounded-lg p-6 space-y-4">
+            <div className="h-32 bg-muted rounded-lg mb-4"></div>
             <div className="h-4 bg-muted rounded w-3/4"></div>
             <div className="h-3 bg-muted rounded"></div>
             <div className="h-3 bg-muted rounded w-2/3"></div>
@@ -98,62 +108,103 @@ export function AppCards({ onNewApp, onEditApp, apps: propApps, loading: propLoa
       {apps.map((app) => (
         <Card 
           key={app.id} 
-          className="hover:shadow-lg transition-all duration-200 cursor-pointer group hover:scale-[1.02]"
+          className="hover:shadow-lg transition-all duration-200 cursor-pointer group hover:scale-[1.02] overflow-hidden"
           onClick={() => handleCardClick(app.id)}
         >
-          <CardHeader className="pb-3">
-            <div className="flex items-start justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">
+          {/* App Logo/Screenshot Header */}
+          <div className="relative h-32 bg-gradient-to-br from-purple-600 to-blue-600 overflow-hidden">
+            {app.logo ? (
+              <img
+                src={app.logo}
+                alt={`${app.name} logo`}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <div className="h-16 w-16 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                  <span className="text-white font-bold text-2xl">
                     {app.name.charAt(0)}
                   </span>
                 </div>
-                <div>
-                  <CardTitle className="text-lg group-hover:text-purple-600 transition-colors">
-                    {app.name}
-                  </CardTitle>
-                  <Badge className={statusColors[app.status]} variant="secondary">
-                    {app.status}
-                  </Badge>
-                </div>
               </div>
-              <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={(e) => handleEdit(app, e)}
-                  className="h-8 w-8 p-0"
-                >
-                  <Edit className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={(e) => handleDelete(app, e)}
-                  className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+            )}
+            
+            {/* Status Badge Overlay */}
+            <div className="absolute top-2 left-2">
+              <Badge className={statusColors[app.status]} variant="secondary">
+                {statusEmojis[app.status]} {app.status}
+              </Badge>
+            </div>
+
+            {/* Action Buttons Overlay */}
+            <div className="absolute top-2 right-2 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => handleEdit(app, e)}
+                className="h-8 w-8 p-0 bg-white/20 backdrop-blur-sm hover:bg-white/30"
+              >
+                <Edit className="h-4 w-4 text-white" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => handleDelete(app, e)}
+                className="h-8 w-8 p-0 bg-red-500/20 backdrop-blur-sm hover:bg-red-500/30"
+              >
+                <Trash2 className="h-4 w-4 text-white" />
+              </Button>
+            </div>
+          </div>
+
+          <CardHeader className="pb-3">
+            <div className="flex items-start justify-between">
+              <div>
+                <CardTitle className="text-lg group-hover:text-purple-600 transition-colors line-clamp-1">
+                  {app.name}
+                </CardTitle>
+                <div className="flex items-center space-x-2 mt-1">
+                  <div className="flex items-center space-x-1 text-sm text-muted-foreground">
+                    <Calendar className="h-3 w-3" />
+                    <span>{new Date(app.created_at).toLocaleDateString()}</span>
+                  </div>
+                  <div className="flex items-center space-x-1 text-sm text-green-600 font-medium">
+                    <DollarSign className="h-3 w-3" />
+                    <span>${app.monthly_revenue?.toLocaleString() || 0}</span>
+                  </div>
+                </div>
               </div>
             </div>
           </CardHeader>
+
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground line-clamp-2">
               {app.description || 'No description provided.'}
             </p>
-            
-            <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center space-x-1 text-muted-foreground">
-                <Calendar className="h-4 w-4" />
-                <span>{new Date(app.created_at).toLocaleDateString()}</span>
-              </div>
-              <div className="flex items-center space-x-1 text-green-600 font-medium">
-                <DollarSign className="h-4 w-4" />
-                <span>${app.monthly_revenue?.toLocaleString() || 0}</span>
-              </div>
-            </div>
 
+            {/* Screenshots Preview */}
+            {app.screenshots && app.screenshots.length > 0 && (
+              <div className="grid grid-cols-3 gap-1">
+                {app.screenshots.slice(0, 3).map((screenshot, index) => (
+                  <div key={index} className="aspect-video bg-gray-100 dark:bg-gray-800 rounded overflow-hidden">
+                    <img
+                      src={screenshot}
+                      alt={`${app.name} screenshot ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ))}
+                {app.screenshots.length > 3 && (
+                  <div className="aspect-video bg-gray-100 dark:bg-gray-800 rounded flex items-center justify-center">
+                    <span className="text-xs text-muted-foreground">
+                      +{app.screenshots.length - 3}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Tech Stack */}
             {app.tech_stack && app.tech_stack.length > 0 && (
               <div className="flex flex-wrap gap-1">
                 {app.tech_stack.slice(0, 3).map((tech) => (
@@ -169,6 +220,7 @@ export function AppCards({ onNewApp, onEditApp, apps: propApps, loading: propLoa
               </div>
             )}
 
+            {/* Action Links */}
             <div className="flex justify-between items-center pt-2 border-t">
               <div className="flex space-x-2">
                 {app.repo_url && (

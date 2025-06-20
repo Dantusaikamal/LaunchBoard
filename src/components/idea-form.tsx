@@ -22,9 +22,9 @@ export function IdeaForm({ open, onOpenChange, idea }: IdeaFormProps) {
   const [formData, setFormData] = useState({
     title: idea?.title || '',
     description: idea?.description || '',
-    category: idea?.category || 'saas',
-    status: idea?.status || 'brainstorm',
-    rating: idea?.rating || 3,
+    category: idea?.category || 'general',
+    status: idea?.status || 'brainstorm' as const,
+    rating: idea?.rating || 0,
     market_size: idea?.market_size || '',
     target_audience: idea?.target_audience || '',
     viability_score: idea?.viability_score || 50,
@@ -55,9 +55,9 @@ export function IdeaForm({ open, onOpenChange, idea }: IdeaFormProps) {
     setFormData({
       title: '',
       description: '',
-      category: 'saas',
+      category: 'general',
       status: 'brainstorm',
-      rating: 3,
+      rating: 0,
       market_size: '',
       target_audience: '',
       viability_score: 50,
@@ -112,6 +112,7 @@ export function IdeaForm({ open, onOpenChange, idea }: IdeaFormProps) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="general">General</SelectItem>
                   <SelectItem value="saas">SaaS</SelectItem>
                   <SelectItem value="ecommerce">E-commerce</SelectItem>
                   <SelectItem value="mobile">Mobile App</SelectItem>
@@ -154,9 +155,9 @@ export function IdeaForm({ open, onOpenChange, idea }: IdeaFormProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="rating">Rating</Label>
+              <Label htmlFor="rating">Rating (0-10)</Label>
               <div className="flex items-center space-x-1">
-                {[1, 2, 3, 4, 5].map((star) => (
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((star) => (
                   <button
                     key={star}
                     type="button"
@@ -164,7 +165,7 @@ export function IdeaForm({ open, onOpenChange, idea }: IdeaFormProps) {
                     className="p-1"
                   >
                     <Star 
-                      className={`h-5 w-5 ${
+                      className={`h-4 w-4 ${
                         star <= formData.rating 
                           ? 'fill-yellow-400 text-yellow-400' 
                           : 'text-gray-300'

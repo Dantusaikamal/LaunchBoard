@@ -2,6 +2,11 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { toast } from 'sonner'
+import { useAuth } from './useAuth'
+import { Tables } from '@/integrations/supabase/types'
+
+// Use the Supabase generated type as the base and extend it
+type IdeaRow = Tables<'ideas'>
 
 export interface Idea {
   id: string
@@ -19,11 +24,29 @@ export interface Idea {
   updated_at: string
 }
 
+// Helper function to convert Supabase row to our Idea type
+const convertToIdea = (row: IdeaRow): Idea => ({
+  ...row,
+  status: row.status as Idea['status'],
+  description: row.description || '',
+  market_size: row.market_size || undefined,
+  target_audience: row.target_audience || undefined,
+  viability_score: row.viability_score || undefined,
+  tags: row.tags || undefined,
+  rating: row.rating || 0
+})
+
 export function useIdeas() {
   const [ideas, setIdeas] = useState<Idea[]>([])
   const [loading, setLoading] = useState(true)
+  const { user } = useAuth()
 
   const fetchIdeas = async () => {
+    if (!user) {
+      setLoading(false)
+      return
+    }
+
     try {
       const { data, error } = await supabase
         .from('ideas')
@@ -31,7 +54,9 @@ export function useIdeas() {
         .order('created_at', { ascending: false })
 
       if (error) throw error
-      setIdeas(data || [])
+      
+      const convertedIdeas = (data || []).map(convertToIdea)
+      setIdeas(convertedIdeas)
     } catch (error) {
       console.error('Error fetching ideas:', error)
       toast.error('Failed to load ideas')
@@ -40,26 +65,40 @@ export function useIdeas() {
     }
   }
 
-  const createIdea = async (ideaData: Partial<Idea>) => {
+  const createIdea = async (ideaData: Omit<Idea, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+    if (!user) {
+      toast.error('You must be logged in to create ideas')
+      return
+    }
+
     try {
       const { data, error } = await supabase
         .from('ideas')
-        .insert([ideaData])
+        .insert([{
+          ...ideaData,
+          user_id: user.id
+        }])
         .select()
         .single()
 
       if (error) throw error
       
-      setIdeas(prev => [data, ...prev])
+      const convertedIdea = convertToIdea(data)
+      setIdeas(prev => [convertedIdea, ...prev])
       toast.success('Idea created successfully!')
-      return data
+      return convertedIdea
     } catch (error) {
       console.error('Error creating idea:', error)
       toast.error('Failed to create idea')
     }
   }
 
-  const updateIdea = async (id: string, updates: Partial<Idea>) => {
+  const updateIdea = async (id: string, updates: Partial<Omit<Idea, 'id' | 'user_id' | 'created_at' | 'updated_at'>>) => {
+    if (!user) {
+      toast.error('You must be logged in to update ideas')
+      return
+    }
+
     try {
       const { data, error } = await supabase
         .from('ideas')
@@ -70,9 +109,10 @@ export function useIdeas() {
 
       if (error) throw error
       
-      setIdeas(prev => prev.map(idea => idea.id === id ? data : idea))
+      const convertedIdea = convertToIdea(data)
+      setIdeas(prev => prev.map(idea => idea.id === id ? convertedIdea : idea))
       toast.success('Idea updated successfully!')
-      return data
+      return convertedIdea
     } catch (error) {
       console.error('Error updating idea:', error)
       toast.error('Failed to update idea')
@@ -80,6 +120,11 @@ export function useIdeas() {
   }
 
   const deleteIdea = async (id: string) => {
+    if (!user) {
+      toast.error('You must be logged in to delete ideas')
+      return
+    }
+
     try {
       const { error } = await supabase
         .from('ideas')
@@ -98,7 +143,7 @@ export function useIdeas() {
 
   useEffect(() => {
     fetchIdeas()
-  }, [])
+  }, [user])
 
   return {
     ideas,

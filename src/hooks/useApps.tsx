@@ -18,6 +18,8 @@ export interface App {
   backend_url: string | null
   deployment_url: string | null
   logo_url: string | null
+  logo?: string
+  screenshots?: string[]
   monthly_revenue: number
   users_count: number
 }

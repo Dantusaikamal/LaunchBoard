@@ -1,12 +1,13 @@
 
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/hooks/useAuth";
+import { OfflineProvider } from "@/hooks/useOffline";
 import { PWAInstall } from "@/components/pwa-install";
+import { OfflineStatus } from "@/components/offline-status";
 import Index from "./pages/Index";
 import Apps from "./pages/Apps";
 import AppDetail from "./pages/AppDetail";
@@ -24,12 +25,10 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ThemeProvider defaultTheme="dark" storageKey="launchboard-ui-theme">
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AuthProvider>
+    <BrowserRouter>
+      <ThemeProvider defaultTheme="dark" storageKey="launchboard-ui-theme">
+        <AuthProvider>
+          <OfflineProvider>
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/apps" element={<Apps />} />
@@ -46,10 +45,13 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
             <PWAInstall />
-          </AuthProvider>
-        </BrowserRouter>
-      </TooltipProvider>
-    </ThemeProvider>
+            <OfflineStatus />
+            <Toaster />
+            <Sonner />
+          </OfflineProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </BrowserRouter>
   </QueryClientProvider>
 );
 

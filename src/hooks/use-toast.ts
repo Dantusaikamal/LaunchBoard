@@ -1,3 +1,4 @@
+
 import * as React from "react"
 
 import type {
@@ -169,17 +170,30 @@ function toast({ ...props }: Toast) {
 }
 
 function useToast() {
+  // Add a safety check to ensure React context is available
+  const [mounted, setMounted] = React.useState(false)
   const [state, setState] = React.useState<State>(memoryState)
 
   React.useEffect(() => {
+    setMounted(true)
     listeners.push(setState)
     return () => {
       const index = listeners.indexOf(setState)
       if (index > -1) {
         listeners.splice(index, 1)
       }
+      setMounted(false)
     }
-  }, [state])
+  }, [])
+
+  // Return safe defaults if not mounted
+  if (!mounted) {
+    return {
+      toasts: [],
+      toast,
+      dismiss: () => {},
+    }
+  }
 
   return {
     ...state,

@@ -1,3 +1,4 @@
+
 import { useToast } from "@/hooks/use-toast"
 import {
   Toast,
@@ -7,9 +8,22 @@ import {
   ToastTitle,
   ToastViewport,
 } from "@/components/ui/toast"
+import { useEffect, useState } from "react"
 
 export function Toaster() {
+  const [mounted, setMounted] = useState(false)
+  
+  // Always call useToast - never conditionally
   const { toasts } = useToast()
+  
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Don't render until component is mounted to avoid SSR issues
+  if (!mounted) {
+    return null
+  }
 
   return (
     <ToastProvider>

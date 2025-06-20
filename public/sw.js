@@ -1,7 +1,7 @@
 
-const CACHE_NAME = 'launchboard-v2';
-const STATIC_CACHE = 'launchboard-static-v2';
-const DYNAMIC_CACHE = 'launchboard-dynamic-v2';
+const CACHE_NAME = 'launchboard-v3';
+const STATIC_CACHE = 'launchboard-static-v3';
+const DYNAMIC_CACHE = 'launchboard-dynamic-v3';
 
 const staticAssets = [
   '/',
@@ -42,7 +42,7 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch strategy: Network First with Cache Fallback
+// Enhanced fetch strategy
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   
@@ -125,26 +125,29 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-// Background sync for offline data
+// Enhanced background sync
 self.addEventListener('sync', (event) => {
   if (event.tag === 'background-sync') {
     event.waitUntil(
-      // Sync offline data when connection is restored
-      syncOfflineData()
+      syncOfflineData().catch(error => {
+        console.error('Background sync failed:', error);
+      })
     );
   }
 });
 
-// Push notifications
+// Enhanced push notifications
 self.addEventListener('push', (event) => {
+  const data = event.data ? event.data.json() : {};
   const options = {
-    body: event.data ? event.data.text() : 'New update available!',
+    body: data.body || 'New update available!',
     icon: '/icon-192x192.png',
     badge: '/icon-192x192.png',
     vibrate: [100, 50, 100],
     data: {
       dateOfArrival: Date.now(),
-      primaryKey: '1'
+      primaryKey: data.id || '1',
+      url: data.url || '/'
     },
     actions: [
       {
@@ -157,49 +160,95 @@ self.addEventListener('push', (event) => {
         title: 'Close notification',
         icon: '/icon-192x192.png'
       }
-    ]
+    ],
+    requireInteraction: data.requireInteraction || false,
+    silent: data.silent || false
   };
 
   event.waitUntil(
-    self.registration.showNotification('LaunchBoard', options)
+    self.registration.showNotification(data.title || 'LaunchBoard', options)
   );
 });
 
-// Notification click handling
+// Enhanced notification click handling
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
   if (event.action === 'explore') {
+    const url = event.notification.data.url || '/';
     event.waitUntil(
-      clients.openWindow('/')
+      clients.matchAll({ type: 'window' }).then(clientList => {
+        for (const client of clientList) {
+          if (client.url === url && 'focus' in client) {
+            return client.focus();
+          }
+        }
+        if (clients.openWindow) {
+          return clients.openWindow(url);
+        }
+      })
+    );
+  }
+});
+
+// Message handling for manual sync triggers
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SYNC_NOW') {
+    event.waitUntil(
+      syncOfflineData().then(() => {
+        event.ports[0].postMessage({ success: true });
+      }).catch(error => {
+        event.ports[0].postMessage({ success: false, error: error.message });
+      })
     );
   }
 });
 
 async function syncOfflineData() {
-  // Implement offline data synchronization logic
   try {
-    const offlineData = await getOfflineData();
-    if (offlineData.length > 0) {
-      await syncToServer(offlineData);
-      await clearOfflineData();
-    }
+    // Open IndexedDB to get unsynced data
+    const request = indexedDB.open('LaunchBoardOfflineDB', 1);
+    
+    return new Promise((resolve, reject) => {
+      request.onsuccess = (event) => {
+        const db = event.target.result;
+        const transaction = db.transaction(['syncQueue'], 'readonly');
+        const store = transaction.objectStore('syncQueue');
+        const getAllRequest = store.getAll();
+        
+        getAllRequest.onsuccess = () => {
+          const syncItems = getAllRequest.result;
+          if (syncItems.length > 0) {
+            console.log(`Found ${syncItems.length} items to sync`);
+            // Notify the main app about sync completion
+            self.clients.matchAll().then(clients => {
+              clients.forEach(client => {
+                client.postMessage({
+                  type: 'SYNC_COMPLETE',
+                  count: syncItems.length
+                });
+              });
+            });
+          }
+          resolve();
+        };
+        
+        getAllRequest.onerror = () => reject(getAllRequest.error);
+      };
+      
+      request.onerror = () => reject(request.error);
+    });
   } catch (error) {
-    console.error('Sync failed:', error);
+    console.error('Sync error:', error);
+    throw error;
   }
 }
 
-async function getOfflineData() {
-  // Get data stored offline
-  return [];
-}
-
-async function syncToServer(data) {
-  // Sync data to server
-  console.log('Syncing data:', data);
-}
-
-async function clearOfflineData() {
-  // Clear synced offline data
-  console.log('Offline data cleared');
-}
+// Periodic background sync registration
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    self.registration.sync.register('background-sync').catch(error => {
+      console.error('Background sync registration failed:', error);
+    })
+  );
+});

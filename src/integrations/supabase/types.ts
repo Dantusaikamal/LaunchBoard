@@ -63,6 +63,50 @@ export type Database = {
         }
         Relationships: []
       }
+      archive_items: {
+        Row: {
+          app_id: string
+          content: string
+          created_at: string
+          file_url: string | null
+          id: string
+          tags: string[] | null
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          app_id: string
+          content: string
+          created_at?: string
+          file_url?: string | null
+          id?: string
+          tags?: string[] | null
+          title: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          app_id?: string
+          content?: string
+          created_at?: string
+          file_url?: string | null
+          id?: string
+          tags?: string[] | null
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "archive_items_app_id_fkey"
+            columns: ["app_id"]
+            isOneToOne: false
+            referencedRelation: "apps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       deployments: {
         Row: {
           app_id: string
@@ -115,6 +159,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ideas: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          market_size: string | null
+          rating: number | null
+          status: string
+          tags: string[] | null
+          target_audience: string | null
+          title: string
+          updated_at: string
+          user_id: string
+          viability_score: number | null
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          market_size?: string | null
+          rating?: number | null
+          status?: string
+          tags?: string[] | null
+          target_audience?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+          viability_score?: number | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          market_size?: string | null
+          rating?: number | null
+          status?: string
+          tags?: string[] | null
+          target_audience?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          viability_score?: number | null
+        }
+        Relationships: []
       }
       launches: {
         Row: {
@@ -259,6 +351,56 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "revenues_app_id_fkey"
+            columns: ["app_id"]
+            isOneToOne: false
+            referencedRelation: "apps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      secrets: {
+        Row: {
+          app_id: string
+          created_at: string
+          description: string | null
+          environment: string
+          id: string
+          is_encrypted: boolean
+          last_accessed: string | null
+          name: string
+          status: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          app_id: string
+          created_at?: string
+          description?: string | null
+          environment: string
+          id?: string
+          is_encrypted?: boolean
+          last_accessed?: string | null
+          name: string
+          status?: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          app_id?: string
+          created_at?: string
+          description?: string | null
+          environment?: string
+          id?: string
+          is_encrypted?: boolean
+          last_accessed?: string | null
+          name?: string
+          status?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "secrets_app_id_fkey"
             columns: ["app_id"]
             isOneToOne: false
             referencedRelation: "apps"

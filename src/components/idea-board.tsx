@@ -5,7 +5,8 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useIdeas } from "@/hooks/useIdeas"
+import { useIdeas, Idea } from "@/hooks/useIdeas"
+import { IdeaForm } from "./idea-form"
 import { 
   Lightbulb, 
   Star, 
@@ -24,10 +25,12 @@ interface IdeaBoardProps {
 }
 
 export function IdeaBoard({ onNewIdea }: IdeaBoardProps) {
-  const { ideas, loading } = useIdeas()
+  const { ideas, loading, deleteIdea } = useIdeas()
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [categoryFilter, setCategoryFilter] = useState("all")
+  const [editingIdea, setEditingIdea] = useState<Idea | null>(null)
+  const [showEditForm, setShowEditForm] = useState(false)
 
   const filteredIdeas = ideas.filter(idea => {
     const matchesSearch = idea.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -44,6 +47,17 @@ export function IdeaBoard({ onNewIdea }: IdeaBoardProps) {
     'development': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
     'launched': 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200',
     'archived': 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+  }
+
+  const handleEdit = (idea: Idea) => {
+    setEditingIdea(idea)
+    setShowEditForm(true)
+  }
+
+  const handleDelete = async (id: string) => {
+    if (window.confirm('Are you sure you want to delete this idea?')) {
+      await deleteIdea(id)
+    }
   }
 
   if (loading) {
@@ -95,6 +109,7 @@ export function IdeaBoard({ onNewIdea }: IdeaBoardProps) {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Categories</SelectItem>
+              <SelectItem value="general">General</SelectItem>
               <SelectItem value="saas">SaaS</SelectItem>
               <SelectItem value="ecommerce">E-commerce</SelectItem>
               <SelectItem value="mobile">Mobile App</SelectItem>
@@ -142,10 +157,20 @@ export function IdeaBoard({ onNewIdea }: IdeaBoardProps) {
                     </div>
                   </div>
                   <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-8 w-8 p-0"
+                      onClick={() => handleEdit(idea)}
+                    >
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-red-600 hover:text-red-700">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                      onClick={() => handleDelete(idea.id)}
+                    >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -163,7 +188,7 @@ export function IdeaBoard({ onNewIdea }: IdeaBoardProps) {
                   </div>
                   <div className="flex items-center space-x-1">
                     <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                    <span className="font-medium">{idea.rating}/5</span>
+                    <span className="font-medium">{idea.rating}/10</span>
                   </div>
                 </div>
 
@@ -171,7 +196,7 @@ export function IdeaBoard({ onNewIdea }: IdeaBoardProps) {
                   <div className="flex items-center justify-between text-xs">
                     <div className="flex items-center space-x-1 text-green-600">
                       <DollarSign className="h-3 w-3" />
-                      <span>Market: ${idea.market_size}</span>
+                      <span>Market: {idea.market_size}</span>
                     </div>
                     {idea.target_audience && (
                       <div className="flex items-center space-x-1 text-blue-600">
@@ -202,7 +227,7 @@ export function IdeaBoard({ onNewIdea }: IdeaBoardProps) {
                     <TrendingUp className="h-3 w-3" />
                     <span>Viability: {idea.viability_score || 'N/A'}</span>
                   </div>
-                  <Button size="sm" variant="outline">
+                  <Button size="sm" variant="outline" onClick={() => handleEdit(idea)}>
                     View Details
                   </Button>
                 </div>
@@ -211,6 +236,15 @@ export function IdeaBoard({ onNewIdea }: IdeaBoardProps) {
           ))}
         </div>
       )}
+
+      <IdeaForm 
+        open={showEditForm} 
+        onOpenChange={(open) => {
+          setShowEditForm(open)
+          if (!open) setEditingIdea(null)
+        }}
+        idea={editingIdea}
+      />
     </div>
   )
 }

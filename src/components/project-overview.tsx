@@ -4,7 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ResponsiveTabs } from "@/components/responsive-tabs"
+import { AnalyticsDashboard } from "@/components/analytics-dashboard"
+import { RevenueTracker } from "@/components/revenue-tracker"
+import { UptimeMonitor } from "@/components/uptime-monitor"
 import { GitHubIntegration } from "./github-integration"
 import { DeploymentManagement } from "./deployment-management"
 import { FunctionalMarketingCalendar } from "./functional-marketing-calendar"
@@ -29,7 +32,9 @@ import {
   MessageSquare,
   FileText,
   Trophy,
-  Zap
+  Zap,
+  BarChart3,
+  Shield
 } from "lucide-react"
 import { App } from "@/hooks/useApps"
 import { format, differenceInDays } from "date-fns"
@@ -82,6 +87,15 @@ export function ProjectOverview({ app }: ProjectOverviewProps) {
   // Calculate revenue per hour
   const totalHours = Math.max(daysFromCreation * 8, 1)
   const revenuePerHour = (app.monthly_revenue || 0) / totalHours
+
+  const tabs = [
+    { value: "build", label: "Development", icon: Code, mobileLabel: "Dev" },
+    { value: "analytics", label: "Analytics", icon: BarChart3, mobileLabel: "Stats" },
+    { value: "revenue", label: "Revenue", icon: DollarSign, mobileLabel: "Money" },
+    { value: "monitor", label: "Monitoring", icon: Shield, mobileLabel: "Monitor" },
+    { value: "launch", label: "Launch", icon: Target, mobileLabel: "Launch" },
+    { value: "journal", label: "Journal", icon: FileText, mobileLabel: "Notes" }
+  ]
 
   return (
     <div className="space-y-6">
@@ -261,18 +275,9 @@ export function ProjectOverview({ app }: ProjectOverviewProps) {
       </div>
 
       {/* Main Content Tabs */}
-      <Tabs defaultValue="build" className="space-y-6 animate-fade-in">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6 animate-scale-in">
-          <TabsTrigger value="build">Build</TabsTrigger>
-          <TabsTrigger value="launch">Launch</TabsTrigger>
-          <TabsTrigger value="revenue">Revenue</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          <TabsTrigger value="journal">Journal</TabsTrigger>
-          <TabsTrigger value="insights">Insights</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="build" className="space-y-6">
-          <div className="space-y-6">
+      <ResponsiveTabs defaultValue="build" tabs={tabs} className="animate-fade-in">
+        <div className="space-y-6">
+          <div data-tab="build" className="space-y-6">
             {/* GitHub Integration */}
             <GitHubIntegration repoUrl={app.repo_url} />
             
@@ -306,10 +311,20 @@ export function ProjectOverview({ app }: ProjectOverviewProps) {
               </CardContent>
             </Card>
           </div>
-        </TabsContent>
 
-        <TabsContent value="launch" className="space-y-6">
-          <div className="space-y-6">
+          <div data-tab="analytics">
+            <AnalyticsDashboard appId={app.id} />
+          </div>
+
+          <div data-tab="revenue">
+            <RevenueTracker appId={app.id} />
+          </div>
+
+          <div data-tab="monitor">
+            <UptimeMonitor appId={app.id} />
+          </div>
+
+          <div data-tab="launch" className="space-y-6">
             {/* Deployment Management */}
             <DeploymentManagement appId={app.id} />
             
@@ -338,165 +353,12 @@ export function ProjectOverview({ app }: ProjectOverviewProps) {
             {/* Marketing Calendar */}
             <FunctionalMarketingCalendar />
           </div>
-        </TabsContent>
 
-        <TabsContent value="revenue" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <Card className="animate-fade-in">
-              <CardHeader>
-                <CardTitle>Revenue Model</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Badge variant="secondary" className="bg-green-100 text-green-800">
-                  Monthly Subscription
-                </Badge>
-                <p className="text-sm text-muted-foreground mt-2">
-                  $29/month per user
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="animate-fade-in" style={{ animationDelay: '0.1s' }}>
-              <CardHeader>
-                <CardTitle>Conversion Rate</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">12.5%</div>
-                <p className="text-xs text-muted-foreground">
-                  Visitor → Paying Customer
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
-              <CardHeader>
-                <CardTitle>Revenue per Hour</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-600">
-                  ${revenuePerHour.toFixed(2)}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Based on {totalHours.toFixed(0)} hours worked
-                </p>
-              </CardContent>
-            </Card>
+          <div data-tab="journal">
+            <AdvancedNotes appId={app.id} appName={app.name} />
           </div>
-        </TabsContent>
-
-        <TabsContent value="analytics" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="animate-fade-in">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5" />
-                  Traffic Overview
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex justify-between">
-                    <span>Unique Visitors</span>
-                    <span className="font-bold">2,847</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Bounce Rate</span>
-                    <span className="font-bold">34%</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Avg. Session</span>
-                    <span className="font-bold">3m 42s</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="animate-fade-in" style={{ animationDelay: '0.1s' }}>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  User Funnel
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-blue-600 h-2 rounded-full transition-all duration-1000" style={{ width: '100%' }}></div>
-                    </div>
-                    <span className="text-sm whitespace-nowrap">Visit: 1000</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-green-600 h-2 rounded-full transition-all duration-1000" style={{ width: '65%' }}></div>
-                    </div>
-                    <span className="text-sm whitespace-nowrap">Signup: 650</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-yellow-600 h-2 rounded-full transition-all duration-1000" style={{ width: '12%' }}></div>
-                    </div>
-                    <span className="text-sm whitespace-nowrap">Payment: 125</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="journal" className="space-y-6">
-          <AdvancedNotes appId={app.id} appName={app.name} />
-        </TabsContent>
-
-        <TabsContent value="insights" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="animate-fade-in">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Star className="h-5 w-5" />
-                  Key Learnings
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
-                    <p className="text-sm font-medium">What worked well:</p>
-                    <p className="text-sm text-muted-foreground">
-                      Starting with a simple MVP and getting user feedback early
-                    </p>
-                  </div>
-                  <div className="p-3 bg-orange-50 dark:bg-orange-950 rounded-lg">
-                    <p className="text-sm font-medium">What to improve:</p>
-                    <p className="text-sm text-muted-foreground">
-                      Need better time estimation for features
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="animate-fade-in" style={{ animationDelay: '0.1s' }}>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MessageSquare className="h-5 w-5" />
-                  Motivation Corner
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center space-y-4">
-                  <div className="text-lg font-medium italic">
-                    "The best time to plant a tree was 20 years ago. The second best time is now."
-                  </div>
-                  <Button variant="outline" className="animate-scale-in hover:scale-105 transition-transform">
-                    <Star className="h-4 w-4 mr-2" />
-                    Get New Quote
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-      </Tabs>
+        </div>
+      </ResponsiveTabs>
 
       {/* Magic Buttons */}
       <div className="flex flex-wrap gap-4">
